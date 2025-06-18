@@ -1,0 +1,181 @@
+import javafx.application.Application;
+import javafx.geometry.Insets;
+import javafx.scene.Scene;
+import javafx.scene.control.Button;
+import javafx.scene.control.TextField;
+import javafx.scene.layout.GridPane;
+import javafx.stage.Stage;
+
+public class NormalCalculatorFX extends Application {
+
+    private TextField display = new TextField();
+    private double num1 = 0;
+    private String operator = "";
+    private boolean startNewNumber = true;
+
+    public static void main(String[] args) {
+        launch(args);
+    }
+
+    @Override
+    public void start(Stage primaryStage) {
+        display.setEditable(false);
+        display.setStyle("-fx-font-size: 24px; -fx-alignment: center-right;");
+        display.setPrefHeight(60);
+
+        GridPane pane = new GridPane();
+        pane.setPadding(new Insets(10));
+        pane.setHgap(5);
+        pane.setVgap(5);
+
+        String[] buttons = {
+            "C", "±", "%", "√",
+            "7", "8", "9", "/",
+            "4", "5", "6", "*",
+            "1", "2", "3", "-",
+            "0", ".", "=", "+"
+        };
+
+        int row = 1, col = 0;
+        for (String b : buttons) {
+            Button button = new Button(b);
+            button.setMinSize(60, 60);
+            button.setStyle("-fx-font-size: 18px;");
+            button.setOnAction(e -> handleInput(b));
+            pane.add(button, col, row);
+            col++;
+            if (col > 3) {
+                col = 0;
+                row++;
+            }
+        }
+
+        pane.add(display, 0, 0, 4, 1);
+
+        Scene scene = new Scene(pane, 260, 360);
+        primaryStage.setTitle("Normal Calculator");
+        primaryStage.setScene(scene);
+        primaryStage.show();
+    }
+
+    private void handleInput(String value) {
+        switch (value) {
+            case "C":
+                display.clear();
+                num1 = 0;
+                operator = "";
+                startNewNumber = true;
+                break;
+
+            case "±":
+                if (!display.getText().isEmpty()) {
+                    double current = parseDisplay();
+                    current = -current;
+                    display.setText(formatNumber(current));
+                }
+                break;
+
+            case "%":
+                if (!display.getText().isEmpty()) {
+                    double current = parseDisplay() / 100;
+                    display.setText(formatNumber(current));
+                    startNewNumber = true;
+                }
+                break;
+
+            case "√":
+                if (!display.getText().isEmpty()) {
+                    double current = parseDisplay();
+                    if (current < 0) {
+                        display.setText("Error");
+                    } else {
+                        display.setText(formatNumber(Math.sqrt(current)));
+                        startNewNumber = true;
+                    }
+                }
+                break;
+
+            case "+":
+            case "-":
+            case "*":
+            case "/":
+                if (!operator.isEmpty() && !startNewNumber) {
+                    calculate();
+                } else if (!display.getText().isEmpty()) {
+                    num1 = parseDisplay();
+                }
+                operator = value;
+                startNewNumber = true;
+                break;
+
+            case "=":
+                if (!operator.isEmpty() && !startNewNumber) {
+                    calculate();
+                    operator = "";
+                    startNewNumber = true;
+                }
+                break;
+
+            case ".":
+                if (startNewNumber) {
+                    display.setText("0.");
+                    startNewNumber = false;
+                } else if (!display.getText().contains(".")) {
+                    display.appendText(".");
+                }
+                break;
+
+            default: // digits
+                if (startNewNumber) {
+                    display.setText(value);
+                    startNewNumber = false;
+                } else {
+                    display.appendText(value);
+                }
+                break;
+        }
+    }
+
+    private double parseDisplay() {
+        try {
+            return Double.parseDouble(display.getText());
+        } catch (NumberFormatException e) {
+            return 0;
+        }
+    }
+
+    private void calculate() {
+        double num2 = parseDisplay();
+        double result = 0;
+        switch (operator) {
+            case "+":
+                result = num1 + num2;
+                break;
+
+            case "-":
+                result = num1 - num2;
+                break;
+
+            case "*":
+                result = num1 * num2;
+                break;
+
+            case "/":
+                if (num2 == 0) {
+                    display.setText("Error");
+                    return;
+                }
+                result = num1 / num2;
+                break;
+        }
+        display.setText(formatNumber(result));
+        num1 = result;
+    }
+
+    private String formatNumber(double val) {
+        if (val == (long) val)
+            return String.format("%d", (long) val);
+        else
+            return String.format("%s", val);
+    }
+}
